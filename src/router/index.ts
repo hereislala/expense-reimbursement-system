@@ -10,37 +10,37 @@ const router = createRouter({
     {
       path: '/login',
       name: 'Login',
-      component: () => import('@/views/Login.vue')
+      component: () => import('../views/Login.vue')
     },
     {
       path: '/main',
-      component: () => import('@/layouts/DefaultLayout.vue'),
+      component: () => import('../layouts/DefaultLayout.vue'),
       redirect: '/main/dashboard',
       children: [
         {
           path: 'dashboard',
           name: 'Dashboard',
-          component: () => import('@/views/Dashboard.vue')
+          component: () => import('../views/Dashboard.vue')
         },
         {
           path: 'application/create',
           name: 'CreateApplication',
-          component: () => import('@/views/application/CreateApplication.vue')
+          component: () => import('../views/application/CreateApplication.vue')
         },
         {
           path: 'application/list',
           name: 'ApplicationList',
-          component: () => import('@/views/application/ApplicationList.vue')
+          component: () => import('../views/application/ApplicationList.vue')
         },
         {
           path: 'approval',
           name: 'ApprovalList',
-          component: () => import('@/views/approval/ApprovalList.vue')
+          component: () => import('../views/approval/ApprovalList.vue')
         },
         {
           path: 'statistics',
           name: 'Statistics',
-          component: () => import('@/views/Statistics.vue')
+          component: () => import('../views/Statistics.vue')
         }
       ]
     }
