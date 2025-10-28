@@ -6,6 +6,10 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 import App from './App.vue'
 import router from './router'
+import { initSampleData } from '@/utils/storage'
+
+// 初始化示例数据
+initSampleData()
 
 // 创建应用和状态管理
 const app = createApp(App)

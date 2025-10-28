@@ -1,10 +1,10 @@
 <template>
-  <div class="create-application">
+  <div class="edit-application">
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>新建报销申请</span>
-          <el-button type="primary" @click="handleSubmit">提交申请</el-button>
+          <span>编辑报销申请</span>
+          <el-button type="primary" @click="handleSubmit">保存修改</el-button>
         </div>
       </template>
 
@@ -48,17 +48,18 @@
 
         <el-table :data="form.expenseItems" style="width: 100%" border>
           <el-table-column label="日期" width="120">
-            <template #default="{ row }">
+            <template #default="{ row, $index }">
               <el-date-picker
                 v-model="row.date"
                 type="date"
                 placeholder="选择日期"
                 style="width: 100%"
+                value-format="YYYY-MM-DD"
               />
             </template>
           </el-table-column>
           <el-table-column label="费用类型" width="150">
-            <template #default="{ row }">
+            <template #default="{ row, $index }">
               <el-select v-model="row.category" placeholder="选择类型">
                 <el-option label="交通费" value="transport" />
                 <el-option label="住宿费" value="accommodation" />
@@ -69,7 +70,7 @@
             </template>
           </el-table-column>
           <el-table-column label="金额" width="120">
-            <template #default="{ row }">
+            <template #default="{ row, $index }">
               <el-input-number
                 v-model="row.amount"
                 :min="0"
@@ -80,7 +81,7 @@
             </template>
           </el-table-column>
           <el-table-column label="说明">
-            <template #default="{ row }">
+            <template #default="{ row, $index }">
               <el-input v-model="row.description" placeholder="费用说明" />
             </template>
           </el-table-column>
@@ -120,28 +121,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import type { FormRules, UploadProps, UploadFile } from 'element-plus'
-import { addApplication } from '@/utils/storage'
-import { useRouter } from 'vue-router'
+import { getApplications, updateApplication } from '@/utils/storage'
+
+const route = useRoute()
 const router = useRouter()
 const formRef = ref()
+
+const applicationId = route.params.id as string
 
 const form = reactive({
   type: '',
   reason: '',
   urgency: 'normal',
-  expenseItems: [
-    {
-      date: '',
-      category: '',
-      amount: 0,
-      description: '',
-    },
-  ],
-  attachments: [],
+  expenseItems: [] as any[],
+  attachments: [] as any[],
 })
 
 const rules: FormRules = {
@@ -197,9 +195,24 @@ const handleRemove: UploadProps['onRemove'] = (file) => {
   }
 }
 
-// 提交申请
-// 在 handleSubmit 方法中，替换模拟提交部分：
+// 加载申请数据
+const loadApplicationData = () => {
+  const applications = getApplications()
+  const application = applications.find((app: any) => app.id === applicationId)
 
+  if (application) {
+    form.type = application.type
+    form.reason = application.reason
+    form.urgency = application.urgency
+    form.expenseItems = application.expenseItems ? [...application.expenseItems] : []
+    form.attachments = application.attachments ? [...application.attachments] : []
+  } else {
+    ElMessage.error('申请不存在')
+    router.back()
+  }
+}
+
+// 提交修改
 const handleSubmit = async () => {
   if (!formRef.value) return
 
@@ -216,12 +229,12 @@ const handleSubmit = async () => {
       return
     }
 
-    await ElMessageBox.confirm('确定提交报销申请吗？', '提示', {
+    await ElMessageBox.confirm('确定保存修改吗？', '提示', {
       type: 'warning',
     })
 
-    // 使用 localStorage 保存数据
-    const applicationData = {
+    // 更新申请数据
+    const updatedData = {
       type: form.type,
       reason: form.reason,
       urgency: form.urgency,
@@ -233,33 +246,28 @@ const handleSubmit = async () => {
       attachments: form.attachments,
     }
 
-    // 保存到本地存储
-    const newApplication = addApplication(applicationData)
+    // 更新到本地存储
+    const updatedApplication = updateApplication(applicationId, updatedData)
 
-    ElMessage.success('提交成功！')
-
-    // 重置表单
-    formRef.value.resetFields()
-    form.expenseItems = [
-      {
-        date: '',
-        category: '',
-        amount: 0,
-        description: '',
-      },
-    ]
-    form.attachments = []
-
-    // 跳转到申请列表
-    router.push('/main/application/list')
+    if (updatedApplication) {
+      ElMessage.success('修改成功！')
+      router.push('/main/application/list')
+    } else {
+      ElMessage.error('修改失败')
+    }
   } catch (error) {
     console.log('提交失败:', error)
   }
 }
+
+// 初始化加载数据
+onMounted(() => {
+  loadApplicationData()
+})
 </script>
 
 <style scoped>
-.create-application {
+.edit-application {
   padding: 0;
 }
 
