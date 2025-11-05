@@ -92,6 +92,8 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormRules } from 'element-plus'
+// 导入审批方法
+import { approveApplication, rejectApplication, transferApplication } from '@/utils/storage'
 
 interface Props {
   modelValue: boolean
@@ -170,31 +172,34 @@ const handleConfirm = async () => {
   try {
     // 表单验证
     await formRef.value.validate()
-
     loading.value = true
 
     // 模拟 API 调用
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    let result
 
-    // 构建提交数据
-    const submitData = {
-      applicationId: props.application?.id,
-      action: props.action,
-      comment: form.comment,
-      ...(props.action === 'transfer' && { transferTo: form.transferTo }),
+    //根据操作类型调用不同的方法
+    switch (props.action) {
+      case 'approve':
+        result = await approveApplication(props.application?.id, form.comment)
+        break
+      case 'reject':
+        result = await rejectApplication(props.application?.id, form.comment)
+        break
+      case 'transfer':
+        result = await transferApplication(props.application?.id, form.transferTo, form.comment)
+        break
     }
-
-    console.log('审批操作:', submitData)
-
-    // 这里调用真实的审批 API
-    // await approvalApi(submitData)
-
-    // 操作成功
-    ElMessage.success(`${confirmButtonText.value}成功`)
-    handleClose()
-    emit('success')
+    if (result) {
+      ElMessage.success(`${confirmButtonText.value}成功`)
+      handleClose()
+      emit('success')
+    } else {
+      ElMessage.error(`操作失败`)
+    }
   } catch (error) {
     console.log('操作失败:', error)
+    ElMessage.error(`操作失败`)
   } finally {
     loading.value = false
   }

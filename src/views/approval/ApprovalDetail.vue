@@ -123,7 +123,15 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Check, Close, InfoFilled } from '@element-plus/icons-vue'
 import ApprovalDialog from './components/ApprovalDialog.vue'
+import { ElMessage } from 'element-plus'
+import {
+  getApplications,
+  approveApplication,
+  rejectApplication,
+  transferApplication,
+} from '@/utils/storage'
 
+const loading = ref(false)
 const route = useRoute()
 const applicationId = route.params.id
 
@@ -317,17 +325,43 @@ const handleReject = () => {
 
 const handleApprovalSuccess = () => {
   // 重新加载详情数据
-  loadDetailData()
+  loadDetailData(route.params.id as string)
 }
 
 // 加载详情数据
-const loadDetailData = async () => {
-  // 这里应该根据 applicationId 调用 API 获取详情
-  console.log('加载审批详情:', applicationId)
+// 修改数据获取，确保能正确显示审批记录
+const loadDetailData = async (id: string) => {
+  if (!id) {
+    loading.value = false
+    return
+  }
+
+  loading.value = true
+  try {
+    // 从 localStorage 获取数据
+    const applications = getApplications()
+    const application = applications.find((app: any) => app.id === id)
+
+    if (application) {
+      // 确保有审批记录数据
+      if (!application.approvalHistory) {
+        application.approvalHistory = []
+      }
+      detail.value = application
+    } else {
+      ElMessage.error('申请不存在')
+      detail.value = {} as any
+    }
+  } catch (error) {
+    console.error('加载详情失败:', error)
+    ElMessage.error('加载详情失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => {
-  loadDetailData()
+  loadDetailData(route.params.id as string)
 })
 </script>
 

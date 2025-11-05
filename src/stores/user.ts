@@ -2,11 +2,11 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
-  const id = ref('')
-  const name = ref('')
+  const id = ref('1')
+  const name = ref('张三')
   const avatar = ref('')
-  const department = ref('')
-  const role = ref('') // 'employee', 'manager', 'finance'
+  const department = ref('技术部')
+  const role = ref('manager') // 改为manager，表示有审批权限
 
   const setUserInfo = (userInfo: any) => {
     id.value = userInfo.id
@@ -22,6 +22,6 @@ export const useUserStore = defineStore('user', () => {
     avatar,
     department,
     role,
-    setUserInfo
+    setUserInfo,
   }
 })

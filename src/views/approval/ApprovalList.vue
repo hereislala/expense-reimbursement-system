@@ -155,6 +155,15 @@ import { ElMessage } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import ApprovalDialog from './components/ApprovalDialog.vue'
 import { useRouter } from 'vue-router'
+// 修改数据获取方法
+import {
+  getApprovalApplications,
+  approveApplication,
+  rejectApplication,
+  transferApplication,
+} from '@/utils/storage'
+import { useUserStore } from '@/stores/user'
+const userStore = useUserStore()
 const router = useRouter()
 const loading = ref(false)
 
@@ -350,20 +359,97 @@ const handleCurrentChange = (page: number) => {
 }
 
 // 加载表格数据
+// 在 loadTableData 方法开头添加详细日志
 const loadTableData = async () => {
   loading.value = true
   try {
-    // 模拟 API 调用
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    console.log('=== 开始加载审批数据 ===')
 
-    // 模拟筛选
-    const filteredData = filterData([...tableData.value])
+    // 从 localStorage 获取审批数据
+    const allApplications = getApprovalApplications()
+    console.log('1. 所有审批相关申请:', allApplications)
+
+    // 获取当前用户
+    const currentUser = userStore.name
+    console.log('2. 当前登录用户:', currentUser)
+
+    // 待我审批：状态为pending且当前审批人是当前用户
+    const pendingApplications = allApplications.filter((app: any) => {
+      const isPendingForMe = app.status === 'pending' && app.currentApprover === currentUser
+      console.log(
+        `申请 ${app.applicationNo}: 状态=${app.status}, 审批人=${app.currentApprover}, 待我审批=${isPendingForMe}`,
+      )
+      return isPendingForMe
+    })
+
+    console.log('3. 待我审批的申请:', pendingApplications)
+
+    // 我已审批：审批历史中有当前用户的审批记录
+    const processedApplications = allApplications.filter((app: any) => {
+      const hasMyApproval = app.approvalHistory?.some(
+        (history: any) => history.approver === currentUser,
+      )
+      console.log(
+        `申请 ${app.applicationNo}: 审批历史=`,
+        app.approvalHistory,
+        '我已审批=',
+        hasMyApproval,
+      )
+      return hasMyApproval
+    })
+
+    console.log('4. 我已审批的申请:', processedApplications)
+
+    let displayData = []
+
+    if (searchForm.status === 'pending') {
+      displayData = pendingApplications
+    } else if (searchForm.status === 'processed') {
+      displayData = processedApplications
+    } else {
+      displayData = [...pendingApplications, ...processedApplications]
+    }
+    console.log('searchForm 当前值:', JSON.stringify(searchForm))
+
+    console.log('5. 筛选前的显示数据:', displayData)
+
+    // 应用其他筛选条件
+    const filteredData = filterData(displayData)
+    console.log('6. 筛选后的数据:', filteredData)
+
     pagination.total = filteredData.length
 
-    const start = (pagination.currentPage - 1) * pagination.pageSize
-    const end = start + pagination.pageSize
-    tableData.value = filteredData.slice(start, end)
+    // 处理显示数据
+    tableData.value = filteredData
+      .map((app) => {
+        const isPending = app.status === 'pending' && app.currentApprover === currentUser
+        const isProcessed = app.approvalHistory?.some(
+          (history: any) => history.approver === currentUser,
+        )
+
+        let myAction = undefined
+        if (isProcessed) {
+          const myHistory = app.approvalHistory.find(
+            (history: any) => history.approver === currentUser,
+          )
+          myAction = myHistory?.action
+        }
+
+        return {
+          ...app,
+          approvalStatus: isPending ? 'pending' : 'processed',
+          myAction: myAction,
+        }
+      })
+      .slice(
+        (pagination.currentPage - 1) * pagination.pageSize,
+        pagination.currentPage * pagination.pageSize,
+      )
+
+    console.log('7. 最终表格数据:', tableData.value)
+    console.log('=== 加载完成 ===')
   } catch (error) {
+    console.error('加载数据失败:', error)
     ElMessage.error('加载数据失败')
   } finally {
     loading.value = false
@@ -375,7 +461,7 @@ const filterData = (data: any[]) => {
   return data.filter((item) => {
     let match = true
 
-    if (searchForm.status && item.approvalStatus !== searchForm.status) {
+    if (searchForm.status && item.status !== searchForm.status) {
       match = false
     }
 

@@ -138,10 +138,12 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import { getApplications, updateApplication } from '@/utils/storage'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const loading = ref(false)
-
+// 在setup中添加
+const userStore = useUserStore()
 // ✅ 表格数据
 const tableData = ref<any[]>([])
 
@@ -285,14 +287,23 @@ const handleCurrentChange = (page: number) => {
 }
 
 // 加载表格数据
+// 修改 loadTableData 方法：
 const loadTableData = async () => {
   loading.value = true
   try {
-    // 从 localStorage 获取数据
+    // 从 localStorage 获取所有申请数据
     const allApplications = getApplications()
 
+    // 使用真实的用户信息
+    const currentUser = userStore.name
+
+    const myApplications = allApplications.filter((app: any) => app.applicant === currentUser)
+
+    console.log('当前用户:', currentUser)
+    console.log('我的申请:', myApplications)
+
     // 应用筛选条件
-    const filteredData = filterData(allApplications)
+    const filteredData = filterData(myApplications)
     pagination.total = filteredData.length
 
     // 分页

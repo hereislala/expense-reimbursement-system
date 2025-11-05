@@ -1,0 +1,71 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "zhangsan",
+      "name": "张三",
+      "department": "技术部",
+      "role": "manager",
+      "avatar": "",
+      "token": "mock-token-zhangsan"
+    },
+    {
+      "id": 2,
+      "username": "lisi",
+      "name": "李四",
+      "department": "销售部",
+      "role": "employee",
+      "avatar": "",
+      "token": "mock-token-lisi"
+    }
+  ],
+  "applications": [
+    {
+      "id": 1,
+      "applicationNo": "BX202401150001",
+      "type": "travel",
+      "reason": "北京出差参加会议交通住宿费用",
+      "totalAmount": 2850.0,
+      "status": "pending",
+      "createTime": "2024-01-15 10:30:00",
+      "applicant": "李四",
+      "applicantId": 2,
+      "department": "销售部",
+      "urgency": "normal",
+      "currentApprover": "张三",
+      "currentApproverId": 1,
+      "expenseItems": [
+        {
+          "date": "2024-01-10",
+          "category": "transport",
+          "amount": 650.0,
+          "description": "往返高铁票"
+        },
+        {
+          "date": "2024-01-10",
+          "category": "accommodation",
+          "amount": 1200.0,
+          "description": "酒店住宿3晚"
+        },
+        { "date": "2024-01-11", "category": "meal", "amount": 300.0, "description": "餐饮补贴" },
+        {
+          "date": "2024-01-12",
+          "category": "transport",
+          "amount": 700.0,
+          "description": "市内交通及出租车"
+        }
+      ],
+      "approvalHistory": [
+        {
+          "time": "2024-01-15 10:30:00",
+          "approver": "李四",
+          "approverId": 2,
+          "action": "submit",
+          "comment": ""
+        }
+      ],
+      "attachments": []
+    }
+  ],
+  "approvals": []
+}

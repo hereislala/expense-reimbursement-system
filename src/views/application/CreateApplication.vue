@@ -216,9 +216,13 @@ const handleSubmit = async () => {
       return
     }
 
-    await ElMessageBox.confirm('确定提交报销申请吗？', '提示', {
+    const action = await ElMessageBox.confirm('确定提交报销申请吗？', '提示', {
+      confirmButtonText: '提交申请',
+      cancelButtonText: '保存草稿',
       type: 'warning',
     })
+      .then(() => 'submit')
+      .catch(() => 'draft')
 
     // 使用 localStorage 保存数据
     const applicationData = {
@@ -231,12 +235,13 @@ const handleSubmit = async () => {
       })),
       totalAmount: Number(totalAmount.value),
       attachments: form.attachments,
+      status: action === 'submit' ? 'pending' : 'draft', //根据选择设置状态
     }
 
     // 保存到本地存储
     const newApplication = addApplication(applicationData)
 
-    ElMessage.success('提交成功！')
+    ElMessage.success(action === 'submit' ? '提交成功，等待审批！' : '已保存为草稿')
 
     // 重置表单
     formRef.value.resetFields()
@@ -253,7 +258,7 @@ const handleSubmit = async () => {
     // 跳转到申请列表
     router.push('/main/application/list')
   } catch (error) {
-    console.log('提交失败:', error)
+    console.log('操作取消:', error)
   }
 }
 </script>
